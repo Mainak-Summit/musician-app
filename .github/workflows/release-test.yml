@@ -7,7 +7,7 @@ on:
 jobs:
   tag-and-push:
     if: github.ref_type == 'branch' && startsWith(github.ref, 'refs/heads/release/v')
-    runs-on: [organization-runner]
+    runs-on: ubuntu-latest
 
     env:
       AWS_REGION: us-east-2
