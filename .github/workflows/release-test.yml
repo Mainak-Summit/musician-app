@@ -1,0 +1,38 @@
+name: Tag and Push Pytest Images to ECR
+
+on:
+  create:
+
+jobs:
+  tag-and-push:
+    if: |
+      github.ref_type == 'branch' &&
+      startsWith(github.ref, 'refs/heads/release/v') &&
+      github.ref =~ /^refs\/heads\/release\/v\d+\.\d+$/
+    runs-on: ubuntu-latest
+
+    env:
+      AWS_REGION: us-east-2
+      ECR_REPO: 12344356.dkr.ecr.us-east-2.amazonaws.com/ads-app-pytest-postgres
+
+    steps:
+      - name: Extract version from branch name
+        run: |
+          VERSION="${GITHUB_REF##*/}"
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+
+      - name: Login to Amazon ECR
+        run: |
+          aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR_REPO
+
+      - name: Pull, tag, and push postgres image
+        run: |
+          docker pull $ECR_REPO:postgres-main
+          docker tag $ECR_REPO:postgres-main $ECR_REPO:postgres-release-${VERSION}
+          docker push $ECR_REPO:postgres-release-${VERSION}
+
+      - name: Pull, tag, and push django image
+        run: |
+          docker pull $ECR_REPO:django-main
+          docker tag $ECR_REPO:django-main $ECR_REPO:django-release-${VERSION}
+          docker push $ECR_REPO:django-release-${VERSION}
