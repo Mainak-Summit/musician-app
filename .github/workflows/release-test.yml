@@ -1,3 +1,4 @@
+## Auto-tags and pushes pytest-postgres and pytest-django Docker images to ECR when a release/vX.Y branch is created
 name: Tag and Push Pytest Images to ECR
 
 on:
@@ -5,17 +6,21 @@ on:
 
 jobs:
   tag-and-push:
-    if: |
-      github.ref_type == 'branch' &&
-      startsWith(github.ref, 'refs/heads/release/v') &&
-      github.ref =~ /^refs\/heads\/release\/v\d+\.\d+$/
-    runs-on: ubuntu-latest
+    if: github.ref_type == 'branch' && startsWith(github.ref, 'refs/heads/release/v')
+    runs-on: [organization-runner]
 
     env:
       AWS_REGION: us-east-2
-      ECR_REPO: 12344356.dkr.ecr.us-east-2.amazonaws.com/ads-app-pytest-postgres
+      ECR_REPO: 1234567.dkr.ecr.us-east-2.amazonaws.com/abc-app-pytest-postgres
 
     steps:
+      - name: Validate branch name format
+        run: |
+          if [[ ! "${GITHUB_REF}" =~ ^refs/heads/release/v[0-9]+\.[0-9]+$ ]]; then
+            echo "Branch name must match release/v<digit>.<digit> format. Got: ${GITHUB_REF}"
+            exit 1
+          fi
+
       - name: Extract version from branch name
         run: |
           VERSION="${GITHUB_REF##*/}"
